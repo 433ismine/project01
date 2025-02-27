@@ -208,8 +208,10 @@ class DemoRealtime(IO):
                 outputs.append(output)
 
                 # features.append(feat[0].cpu().numpy())
-                current_feature = feat.mean(axis=(0, 1, 2, 3)).cpu().numpy()  # 获取均值特征
-                features.append(torch.tensor(current_feature))  # 将特征转换为张量
+                current_feature = feat.mean(dim=1)
+                # current_feature = feat.mean(axis=(0, 1, 2, 3)).cpu()
+                features.append(current_feature.squeeze(0))
+                # features.append(torch.tensor(current_feature))
 
                 print(len(features))
 
@@ -223,20 +225,32 @@ class DemoRealtime(IO):
             with torch.no_grad():
                 output_change,feature_change = selected_label.extract_feature(data)
                 outputs.append(output_change)
-                current_feature_change = feature_change.mean(axis=(0,1,2,3)).cpu().numpy()
-                features.append(torch.tensor(current_feature_change))
-
-
-
+                current_feature_change = feature_change.mean(dim=1)
+                features.append(current_feature_change.squeeze(0))
+                # features.append(current_feature_change)
+        # if len(features) > 0:
+            fused_features = torch.stack(features).mean(dim=0)  # 形状 [T, V, M]
+            intensity = fused_features.cpu().numpy()
+            # features = torch.stack(features)
+            # intensity = (features * features).sum(dim=0) ** 0.5  # 计算三维强度
+            # intensity = (features.unsqueeze(1) * features.unsqueeze(2)).sum(dim=0) ** 0.5  # 计算三维强度
+        # else:
+        #     intensity = np.array([])  # 如果没有特征
 
         # features = torch.stack(features)
         # print(current_feature.shape)  # 应该是 (3,)
         # weights = self.update_weights(current_feature)
         # fused_output = sum(w * out for w, out in zip(weights, outputs))
         fused_output = sum(out for out in outputs)
+        # fused_feature = sum(fe for fe in features)
         output = fused_output[0]
-        intensity = (features * features).sum(dim=0) ** 0.5
-        intensity = intensity.cpu().detach().numpy()
+        # features_change = fused_feature[0]
+        # feature_tensor = torch.tensor(features)
+        # intensity = (features_change * features_change).sum(dim=0) ** 0.5
+        # intensity = intensity.cpu().numpy()
+        print("intensity:",intensity.shape)
+        # if intensity.ndim==1:
+        #     intensity ==np.array([intensity])
         print("Raw output:", output)
         print("Output shape:", output.shape)
 

@@ -76,7 +76,7 @@ def stgcn_visualize(pose,
             score = pose[2, t, :, m].max()
             if score < 0.3:
                 continue
-
+            print(feature.shape)
             f = feature[t // 4, :, m]**5
             if f.mean() != 0:
                 f = f / f.mean()
