@@ -51,7 +51,7 @@ class Model(nn.Module):
             st_gcn(128, 128, kernel_size, 1, **kwargs),
             st_gcn(128, 256, kernel_size, 2, **kwargs),
             st_gcn(256, 256, kernel_size, 1, **kwargs),
-            st_gcn(256, 256, kernel_size, 1, **kwargs),
+            st_gcn(256, 256, kernel_size, 1, **kwargs)
         ))
 
         # initialize parameters for edge importance weighting
@@ -63,7 +63,7 @@ class Model(nn.Module):
         else:
             self.edge_importance = [1] * len(self.st_gcn_networks)
 
-        # fcn for prediction
+        # 与numclass相关
         self.fcn = nn.Conv2d(256, 3, kernel_size=1)
 
     def forward(self, x):
@@ -167,6 +167,7 @@ class st_gcn(nn.Module):
                 padding,
             ),
             nn.BatchNorm2d(out_channels),
+            nn.ReLU(inplace=True),
             nn.Dropout(dropout, inplace=True),
         )
 
@@ -195,3 +196,59 @@ class st_gcn(nn.Module):
         x = self.tcn(x) + res
 
         return self.relu(x), A
+
+    # class Model(nn.Module):
+    #     # ... 省略其他部分 ...
+    #
+    #     def forward(self, x):
+    #         # 动态生成邻接矩阵
+    #         A_dynamic = self.dynamic_adjacency(x)
+    #
+    #         # 数据归一化
+    #         N, C, T, V, M = x.size()
+    #         x = x.permute(0, 4, 3, 1, 2).contiguous()
+    #         x = x.view(N * M, V * C, T)
+    #         x = self.data_bn(x)
+    #         x = x.view(N, M, V, C, T)
+    #         x = x.permute(0, 1, 3, 4, 2).contiguous()
+    #         x = x.view(N * M, C, T, V)
+    #
+    #         # 前向传播
+    #         for gcn, importance in zip(self.st_gcn_networks, self.edge_importance):
+    #             x, _ = gcn(x, A_dynamic * importance)
+    #
+    #         # 全局池化
+    #         x = F.avg_pool2d(x, x.size()[2:])
+    #         x = x.view(N, M, -1, 1, 1).mean(dim=1)
+    #
+    #         # 预测
+    #         x = self.fcn(x)
+    #         x = x.view(x.size(0), -1)
+    #
+    #         return x
+
+    def dynamic_adjacency(self, x):
+            # 根据输入数据动态生成邻接矩阵
+            # 这里可以根据骨骼点之间的距离或角度来设置邻接关系
+        N, C, T, V = x.size(0), x.size(1), x.size(2), x.size(3)
+
+            # 创建初始邻接矩阵
+        A_dynamic = torch.zeros((self.graph.A.size(0), V, V), device=x.device)
+
+            # 例如，使用骨骼点的运动信息来动态调整邻接关系
+        for i in range(N):
+            for j in range(V):
+                    # 计算邻接关系的逻辑，例如基于距离或相对位置等
+                    # 假设这里根据某种条件来设置边
+                for k in range(V):
+                    if self.should_connect(x[i, :, :, j], x[i, :, :, k]):  # 自定义连接条件
+                        A_dynamic[:, j, k] = 1  # 设置连接
+
+        return A_dynamic
+
+    def should_connect(self, point_a, point_b):
+            # 自定义连接条件，例如计算距离或角度
+        threshold=1
+        distance = torch.norm(point_a - point_b)  # 计算欧几里得距离
+        return distance < threshold  # 设定阈值
+

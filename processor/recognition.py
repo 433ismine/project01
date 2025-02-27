@@ -1,10 +1,11 @@
 #!/usr/bin/env python
 # pylint: disable=W0201
+import os
 import sys
 import argparse
 import yaml
 import numpy as np
-
+import matplotlib.pyplot as plt
 # torch
 import torch
 import torch.nn as nn
@@ -36,6 +37,16 @@ class REC_Processor(Processor):
     """
         Processor for Skeleton-based Action Recgnition
     """
+
+    def __init__(self,argv=None):
+        super().__init__(argv)
+
+        self.records={
+            'train_loss':[],
+            "test_loss":[],
+            'top1_acc':[],
+            'top5_acc':[]
+        }
 
     def load_model(self):
         self.model = self.io.load_model(self.arg.model,
@@ -104,6 +115,9 @@ class REC_Processor(Processor):
             self.show_iter_info()
             self.meta_info['iter'] += 1
 
+
+        epoch_train_loss = np.mean(loss_value)
+        self.records['train_loss'].append(epoch_train_loss)
         self.epoch_info['mean_loss']= np.mean(loss_value)
         self.show_epoch_info()
         self.io.print_timer()
@@ -138,11 +152,81 @@ class REC_Processor(Processor):
         if evaluation:
             self.label = np.concatenate(label_frag)
             self.epoch_info['mean_loss']= np.mean(loss_value)
+            test_epoch_loss = np.mean(loss_value)
+            self.records['test_loss'].append(test_epoch_loss)
             self.show_epoch_info()
 
+            topk_dict={}
             # show top-k accuracy
             for k in self.arg.show_topk:
                 self.show_topk(k)
+
+            if 1 in topk_dict:
+                self.records['top1_acc'].append(topk_dict[1])
+            if 5 in topk_dict:
+                self.records['top5_acc'].append(topk_dict[5])
+    def save_records(self):
+        record_path = os.path.join(self.arg.work_dir, 'train_record.json')
+        np.save(record_path, self.records)
+        self.io.print_log(f'Save record to {record_path}')
+
+    def plot_training_curves(self):
+        plt.figure(figsize=(12, 6))
+
+        # 损失曲线
+        plt.subplot(1, 2, 1)
+        plt.plot(self.records['train_loss'], label='Train Loss')
+        plt.plot(self.records['test_loss'], label='Test Loss')
+        plt.title('Training and Validation Loss')
+        plt.xlabel('Epoch')
+        plt.ylabel('Loss')
+        plt.legend()
+
+        # 准确率曲线
+        plt.subplot(1, 2, 2)
+        if len(self.records['top1_acc']) > 0:
+            plt.plot(self.records['top1_acc'], label='Top-1 Accuracy')
+        if len(self.records['top5_acc']) > 0:
+            plt.plot(self.records['top5_acc'], label='Top-5 Accuracy')
+        plt.title('Validation Accuracy')
+        plt.xlabel('Epoch')
+        plt.ylabel('Accuracy')
+        plt.legend()
+
+        # 保存图片
+        plot_path = os.path.join(self.arg.work_dir, 'training_curves.png')
+        plt.savefig(plot_path, dpi=300, bbox_inches='tight')
+        plt.close()
+        self.io.print_log(f"训练曲线已保存至 {plot_path}")
+
+    def start(self):
+        """重写start方法以添加记录保存"""
+        try:
+            # 原有训练流程
+            for epoch in range(self.arg.start_epoch, self.arg.num_epoch):
+                self.meta_info['epoch'] = epoch
+
+                # 训练
+                self.train()
+
+                # 测试
+                self.test()
+
+                # 保存模型
+                if ((epoch + 1) % self.arg.save_interval == 0) or (
+                        epoch + 1 == self.arg.num_epoch):
+                    self.io.save_model(self.model, f'epoch{epoch + 1}.pt')
+
+            # 训练结束后保存记录并绘图
+            self.save_records()
+            self.plot_training_curves()
+
+        except (KeyboardInterrupt, Exception) as e:
+            # 异常情况下仍保存已有记录
+            self.io.print_log('训练意外终止，正在保存记录...')
+            self.save_records()
+            self.plot_training_curves()
+            raise e
 
     @staticmethod
     def get_parser(add_help=False):

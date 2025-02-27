@@ -1,0 +1,52 @@
+# command line: main.py recognition -c config/hand_rgbd/train.yaml
+
+base_lr: 0.1
+batch_size: 64
+config: config/hand_rgbd/train.yaml
+debug: false
+device:
+- 0
+- 1
+- 2
+- 3
+eval_interval: 5
+feeder: feeder.feeder.Feeder
+ignore_weights: []
+log_interval: 100
+model: net.st_gcn.Model
+model_args:
+    dropout: 0.5
+    edge_importance_weighting: true
+    graph_args:
+        layout: ntu-rgb+d
+        strategy: spatial
+    in_channels: 3
+    num_class: 60
+nesterov: true
+num_epoch: 80
+num_worker: 4
+optimizer: SGD
+pavi_log: false
+phase: train
+print_log: true
+save_interval: 10
+save_log: true
+save_result: false
+show_topk:
+- 1
+- 5
+start_epoch: 0
+step:
+- 10
+- 50
+test_batch_size: 64
+test_feeder_args:
+    data_path: ./data/hand_rgbd/val_data.npy
+    label_path: ./data/hand_rgbd/val_label.pkl
+train_feeder_args:
+    data_path: ./data/hand_rgbd/train_data.npy
+    label_path: ./data/hand_rgbd/train_label.pkl
+use_gpu: true
+weight_decay: 0.0001
+weights: null
+work_dir: ./work_dir/recognition/hand_rgbd/ST_GCN

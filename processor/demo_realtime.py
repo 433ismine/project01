@@ -1,5 +1,3 @@
-
-#!/usr/bin/env python
 #!/usr/bin/env python
 import os
 import sys
@@ -18,6 +16,7 @@ import mediapipe as mp
 from pyrealsense2 import pyrealsense2 as rs
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
+from scipy.spatial.distance import mahalanobis
 
 # 初始化 MediaPipe Pose 模型
 mp_pose = mp.solutions.hands
@@ -30,62 +29,83 @@ config.enable_stream(rs.stream.depth, 640, 480, rs.format.z16, 30)
 config.enable_stream(rs.stream.color, 640, 480, rs.format.bgr8, 30)
 pipeline.start(config)
 
+# fig = plt.figure()
+# plot3D = fig.add_subplot(111, projection='3d')
+# plt.ion()
 
-fig = plt.figure()
-plot3D = fig.add_subplot(111, projection='3d')
-plt.ion()  
 
-def display_3d_coordinates(multi_poseshow):
-    # 定义各个部分的关键点索引
-    arms = [0, 1, 2, 3, 4]
-    rightHand = [0, 5, 6, 7, 8]
-    leftHand = [0, 9, 10, 11, 12]
-    legs = [0, 13, 14, 15, 16]
-    body = [0, 17, 18, 19, 20]
-    waist = [0, 20]  
+# def display_3d_coordinates(multi_poseshow):
+#     # 定义各个部分的关键点索引
+#     arms = [0, 1, 2, 3, 4]
+#     rightHand = [0, 5, 6, 7, 8]
+#     leftHand = [0, 9, 10, 11, 12]
+#     legs = [0, 13, 14, 15, 16]
+#     body = [0, 17, 18, 19, 20]
+#     waist = [0, 21]
+#
+#     plot3D.cla()
+#     Expan_Multiple = 1
+#
+#     if len(multi_poseshow) > 0:  # 检查是否有手部数据
+#         for hand_data in multi_poseshow:
+#             hand_id = hand_data['id']  # 获取手的 ID
+#             hand = hand_data['landmarks']  # 获取手的关键点
+#
+#             # 绘制每个关节
+#             plot3D.scatter(hand[:, 0], hand[:, 1], hand[:, 2], c='red', s=40)
+#
+#             # 绘制连接线
+#             plot3D.plot(hand[arms, 0] * Expan_Multiple, hand[arms, 1] * Expan_Multiple, hand[arms, 2], c='green',
+#                         lw=2.0)
+#             plot3D.plot(hand[rightHand, 0] * Expan_Multiple, hand[rightHand, 1] * Expan_Multiple, hand[rightHand, 2],
+#                         c='green', lw=2.0)
+#             plot3D.plot(hand[leftHand, 0] * Expan_Multiple, hand[leftHand, 1] * Expan_Multiple, hand[leftHand, 2],
+#                         c='green', lw=2.0)
+#             plot3D.plot(hand[legs, 0] * Expan_Multiple, hand[legs, 1] * Expan_Multiple, hand[legs, 2], c='green',
+#                         lw=2.0)
+#             plot3D.plot(hand[body, 0] * Expan_Multiple, hand[body, 1] * Expan_Multiple, hand[body, 2], c='green',
+#                         lw=2.0)
+#             if hand.shape[0] > 21:
+#                 plot3D.plot(hand[waist, 0] * Expan_Multiple, hand[waist, 1] * Expan_Multiple, hand[waist, 2], c='green',
+#                             lw=2.0)
+#             plot3D.text(hand[0, 0], hand[0, 1], hand[0, 2], f'ID: {hand_id}', color='blue')
+#
+#     plot3D.set_xlim([-1, 1])
+#     plot3D.set_ylim([-1, 1])
+#     plot3D.set_zlim([0, 1])
+#     plt.draw()
+#     plt.pause(0.001)
 
-    plot3D.cla()
-    Expan_Multiple = 1
-
-    if len(multi_poseshow) > 0:  # 检查是否有手部数据
-        for hand_data in multi_poseshow:
-            hand_id = hand_data['id']  # 获取手的 ID
-            hand = hand_data['landmarks']  # 获取手的关键点
-            
-            # 绘制每个关节
-            plot3D.scatter(hand[:, 0], hand[:, 1], hand[:, 2], c='red', s=40)
-
-            # 绘制连接线，确保连接线的顺序和逻辑正确
-            # 连接手臂
-            plot3D.plot(hand[arms, 0] * Expan_Multiple, hand[arms, 1] * Expan_Multiple, hand[arms, 2], c='green', lw=2.0)
-
-            # 连接右手
-            plot3D.plot(hand[rightHand, 0] * Expan_Multiple, hand[rightHand, 1] * Expan_Multiple, hand[rightHand, 2], c='green', lw=2.0)
-
-            # 连接左手
-            plot3D.plot(hand[leftHand, 0] * Expan_Multiple, hand[leftHand, 1] * Expan_Multiple, hand[leftHand, 2], c='green', lw=2.0)
-
-            # 连接腿部
-            plot3D.plot(hand[legs, 0] * Expan_Multiple, hand[legs, 1] * Expan_Multiple, hand[legs, 2], c='green', lw=2.0)
-
-            # 连接身体
-            plot3D.plot(hand[body, 0] * Expan_Multiple, hand[body, 1] * Expan_Multiple, hand[body, 2], c='green', lw=2.0)
-
-            # 连接腰部
-            if hand.shape[0] > 21:  
-                plot3D.plot(hand[waist, 0] * Expan_Multiple, hand[waist, 1] * Expan_Multiple, hand[waist, 2], c='green', lw=2.0)
-
-            # 标注手的 ID
-            plot3D.text(hand[0, 0], hand[0, 1], hand[0, 2], f'ID: {hand_id}', color='blue')
-
-    plot3D.set_xlim([-1, 1])
-    plot3D.set_ylim([-1, 1])
-    plot3D.set_zlim([0, 1])
-    plt.draw()
-    plt.pause(0.001)
 
 class DemoRealtime(IO):
+    # def __init__(self, model_paths, feature_centers_path, cov_path):
     def start(self):
+    #增强模型
+        model1=self.model1
+        model2=self.model2
+        self.change_models={
+            'lifting-thrusting':model1,
+            'abseiling':model2,
+            # '3':model3,
+            # '4':model4,
+            # '5':model5
+        }
+
+
+        #动态调整参数
+        models=[model1,model2]
+        feature_centers_path = [
+             "./data/1/0225+505015.npy", "./data/111/0225+352006.npy"   #特征中心
+            ]
+        cov_path = "./data/global_cov.npy"    #协方差
+        self.feature_centers = [np.load(path) for path in feature_centers_path]
+        self.cov_inv = np.linalg.inv(np.load(cov_path) + 1e-6 * np.eye(3))
+        # 动态参数
+        self.beta = 1.0  # 温度系数
+        self.alpha = 0.9  # 融合平滑系数
+        self.current_weights = np.ones(len(models)) / len(models)
+        # 动态调整参数
+
         # 加载动作分类标签
         label_name_path = './resource/hand_test/label_name.txt'
         with open(label_name_path) as f:
@@ -117,50 +137,42 @@ class DemoRealtime(IO):
             multi_poseshow = []
             if results.multi_hand_landmarks:
                 multi_pose = []
-                for hand_id,hand_landmarks in enumerate(results.multi_hand_landmarks):  # 遍历每个手部
-                    handshow = [] 
-                    for id,landmark in enumerate(hand_landmarks.landmark):  # 遍历每个手部的 landmark
-                    # 将 MediaPipe 的归一化坐标转换为像素坐标
+                for hand_id, hand_landmarks in enumerate(results.multi_hand_landmarks):
+                    handshow = []
+                    for id, landmark in enumerate(hand_landmarks.landmark):
                         x = int(landmark.x * orig_image.shape[1])
                         y = int(landmark.y * orig_image.shape[0])
 
-                    # 确保坐标在深度图的有效范围内
                         x = max(0, min(x, depth_image.shape[1] - 1))
                         y = max(0, min(y, depth_image.shape[0] - 1))
 
-                    # 获取深度信息
                         z = depth_image[y, x] / 1000.0  # 将深度从毫米转换为米
                         multi_pose.append([x, y, z])
-
-                        handshow.append([x / orig_image.shape[1], y / orig_image.shape[0], z])  # 归一化坐标
-                    if len(handshow) == 21:  # 假设每只手有 21 个关键点
-                        handshow=np.array(handshow)
-                        multi_poseshow.append({'id': id, 'landmarks': handshow}) 
+                        handshow.append([x / orig_image.shape[1], y / orig_image.shape[0], z])
+                    if len(handshow) == 21:
+                        handshow = np.array(handshow)
+                        multi_poseshow.append({'id': id, 'landmarks': handshow})
                     else:
                         print(f"Warning: Expected 21 landmarks, but got {len(handshow)} for one hand.")
 
                 if len(multi_pose) > 0:
-                   multi_pose = np.array(multi_pose)  # Shape: (num_hands, 21, 3)
-                   multi_pose = multi_pose.reshape(1, -1, 3)  # Convert to shape (1, num_joints, 3)
+                    multi_pose = np.array(multi_pose).reshape(1, -1, 3)
             else:
-                multi_pose = np.zeros((0, 21, 3))  # 如果未检测到姿态，返回空数组
+                multi_pose = np.zeros((0, 21, 3))
                 multi_poseshow = np.zeros((0, 21, 3))
 
-# 转换为适合 3D 显示的格式
             if multi_poseshow:
-                multi_poseshow = np.array(multi_poseshow)  # 将包含相同形状元素的列表转换为数组
-
-    # 调用 3D 显示函数
-                display_3d_coordinates(multi_poseshow)
+                multi_poseshow = np.array(multi_poseshow)
+                # display_3d_coordinates(multi_poseshow)
 
             # 姿态数据归一化
             if len(multi_pose) > 0:
-                multi_pose[:, :, 0] = multi_pose[:, :, 0] / orig_image.shape[1]
-                multi_pose[:, :, 1] = multi_pose[:, :, 1] / orig_image.shape[0]
-                multi_pose[:, :, 0:2] = multi_pose[:, :, 0:2] - 0.5
+                multi_pose[:, :, 0] /= orig_image.shape[1]
+                multi_pose[:, :, 1] /= orig_image.shape[0]
+                multi_pose[:, :, 0:2] -= 0.5
                 multi_pose[:, :, 0][multi_pose[:, :, 2] == 0] = 0
                 multi_pose[:, :, 1][multi_pose[:, :, 2] == 0] = 0
-            
+
             # 更新姿态跟踪器
             frame_index = int((time.time() - start_time) * self.arg.fps)
             pose_tracker.update(multi_pose, frame_index)
@@ -169,8 +181,7 @@ class DemoRealtime(IO):
             # 如果有有效的姿态序列，进行模型预测
             if data_numpy is not None:
                 data = torch.from_numpy(data_numpy)
-                data = data.unsqueeze(0)
-                data = data.float().to(self.dev).detach()  # (1, channel, frame, joint, person)
+                data = data.unsqueeze(0).float().to(self.dev).detach()  # (1, channel, frame, joint, person)
 
                 # 模型预测
                 voting_label_name, video_label_name, output, intensity = self.predict(data)
@@ -185,11 +196,46 @@ class DemoRealtime(IO):
                 break
 
     def predict(self, data):
-        # 模型前向传播
-        output, feature = self.model.extract_feature(data)
-        output = output[0]
-        feature = feature[0]
-        intensity = (feature * feature).sum(dim=0) ** 0.5
+        outputs, features = [], []
+        model1 = self.model1
+        model2 = self.model2
+        models = [model1, model2]
+
+        for model in models:
+            with torch.no_grad():
+                print(data.shape)
+                output, feat = model.extract_feature(data)
+                outputs.append(output)
+
+                # features.append(feat[0].cpu().numpy())
+                current_feature = feat.mean(axis=(0, 1, 2, 3)).cpu().numpy()  # 获取均值特征
+                features.append(torch.tensor(current_feature))  # 将特征转换为张量
+
+                print(len(features))
+
+
+        voting_label = output.sum(dim=3).sum(dim=2).sum(dim=1).argmax(dim=0)
+        print("voting_label:", voting_label)
+        voting_label_name = self.label_name[voting_label]
+
+        selected_label = self.change_models.get(voting_label_name,None)
+        if selected_label is not None:
+            with torch.no_grad():
+                output_change,feature_change = selected_label.extract_feature(data)
+                outputs.append(output_change)
+                current_feature_change = feature_change.mean(axis=(0,1,2,3)).cpu().numpy()
+                features.append(torch.tensor(current_feature_change))
+
+
+
+
+        # features = torch.stack(features)
+        # print(current_feature.shape)  # 应该是 (3,)
+        # weights = self.update_weights(current_feature)
+        # fused_output = sum(w * out for w, out in zip(weights, outputs))
+        fused_output = sum(out for out in outputs)
+        output = fused_output[0]
+        intensity = (features * features).sum(dim=0) ** 0.5
         intensity = intensity.cpu().detach().numpy()
         print("Raw output:", output)
         print("Output shape:", output.shape)
@@ -197,14 +243,12 @@ class DemoRealtime(IO):
         # 获取分类结果
         voting_label = output.sum(dim=3).sum(dim=2).sum(dim=1).argmax(dim=0)
         print("voting_label:", voting_label)
-        print("Number of labels:", len(self.label_name))
         voting_label_name = self.label_name[voting_label]
 
         num_person = data.size(4)
         latest_frame_label = [output[:, :, :, m].sum(dim=2)[:, -1].argmax(dim=0) for m in range(num_person)]
         latest_frame_label_name = [self.label_name[l] for l in latest_frame_label]
 
-        num_person = output.size(3)
         num_frame = output.size(1)
         video_label_name = []
         for t in range(num_frame):
@@ -216,6 +260,23 @@ class DemoRealtime(IO):
             video_label_name.append(frame_label_name)
 
         return voting_label_name, video_label_name, output, intensity
+
+    def update_weights(self, feature):
+        """动态更新模型权重"""
+        distances = self._mahalanobis_distance(feature)
+        raw_weights = np.exp(-self.beta * np.array(distances))
+        new_weights = raw_weights / raw_weights.sum()
+
+        # 指数平滑更新
+        self.current_weights = self.alpha * self.current_weights + (1 - self.alpha) * new_weights
+        return self.current_weights
+
+    def _mahalanobis_distance(self, feature):
+        # if feature.ndim > 1:
+        #     feature = feature.flatten()
+
+        """计算特征到各模型中心的马氏距离"""
+        return [mahalanobis(feature, center, self.cov_inv) for center in self.feature_centers]
 
     def render(self, data_numpy, voting_label_name, video_label_name, intensity, orig_image, fps=0):
         # 可视化函数
@@ -232,7 +293,6 @@ class DemoRealtime(IO):
         image = image.astype(np.uint8)
         return image
 
-    
     @staticmethod
     def get_parser(add_help=False):
         parent_parser = IO.get_parser(add_help=False)
@@ -248,11 +308,10 @@ class DemoRealtime(IO):
         parser.set_defaults(config='./config/st_gcn/kinetics-skeleton/demo_realtime.yaml')
         parser.set_defaults(print_log=False)
         return parser
-    
 
 
 class naive_pose_tracker():
-    """ 简单的姿态跟踪器 """
+
     def __init__(self, data_frame=128, num_joint=21, max_frame_dis=np.inf):
         self.data_frame = data_frame
         self.num_joint = num_joint

@@ -1,5 +1,6 @@
 import numpy as np
 
+
 class Graph():
     """ The Graph to model the skeletons extracted by the openpose
 
@@ -26,11 +27,19 @@ class Graph():
                  layout='hand_rgbd',
                  strategy='uniform',
                  max_hop=1,
-                 dilation=1):
+                 dilation=1,
+                 centers=None):
         self.max_hop = max_hop
         self.dilation = dilation
+        self.centers = []
 
         self.get_edge(layout)
+
+        if centers is not None:
+            if not isinstance(centers, list):
+                raise TypeError('centers must be a list')
+            self.centers = centers
+
         self.hop_dis = get_hop_distance(
             self.num_node, self.edge, max_hop=max_hop)
         self.get_adjacency(strategy)
@@ -84,13 +93,12 @@ class Graph():
                               (1, 6), (6, 7), (7, 8),(8, 9),
                               (1,10), (10, 11), (11, 12),(12, 13),
                                (1,14),(14, 15), (15, 16),(16,17),
-                              (1, 18),  (18, 19), (19, 20),(20, 21),
-                              (1,21)
+                              (1, 18),  (18, 19), (19, 20),(20, 21)
                               ]
             neighbor_link = [(i - 1, j - 1) for (i, j) in neighbor_1base]
             self.edge = self_link + neighbor_link
             # self.edge = neighbor_link
-            self.center = 0
+            self.centers = [1,6,10,14,18]
         # elif layout=='customer settings'
         #     pass
         else:
@@ -122,12 +130,12 @@ class Graph():
                 for i in range(self.num_node):
                     for j in range(self.num_node):
                         if self.hop_dis[j, i] == hop:
-                            if self.hop_dis[j, self.center] == self.hop_dis[
-                                    i, self.center]:
+                            jminhop=min([self.hop_dis[j,c] for c in self.centers])
+                            iminhop = min([self.hop_dis[i, c] for c in self.centers])
+
+                            if jminhop == iminhop:
                                 a_root[j, i] = normalize_adjacency[j, i]
-                            elif self.hop_dis[j, self.
-                                              center] > self.hop_dis[i, self.
-                                                                     center]:
+                            elif jminhop > iminhop:
                                 a_close[j, i] = normalize_adjacency[j, i]
                             else:
                                 a_further[j, i] = normalize_adjacency[j, i]

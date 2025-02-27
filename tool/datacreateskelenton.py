@@ -66,7 +66,7 @@ def main():
                 hand_data_list = []  
             elif key == ord('e'):  
                 recording = False
-                save_to_skeleton('../data/1/hand_dataA02020.skeleton', hand_data_list)  
+                save_to_skeleton('../data/A03/hand_dataA03030.skeleton', hand_data_list)
            
             elif key == ord('q'):  
                 break
