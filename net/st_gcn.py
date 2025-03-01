@@ -68,6 +68,8 @@ class Model(nn.Module):
 
     def forward(self, x):
 
+        A_dynamic = self.dynamic_adjacency(x)
+
         # data normalization
         N, C, T, V, M = x.size()
         x = x.permute(0, 4, 3, 1, 2).contiguous()
@@ -80,6 +82,7 @@ class Model(nn.Module):
         # forwad
         for gcn, importance in zip(self.st_gcn_networks, self.edge_importance):
             x, _ = gcn(x, self.A * importance)
+            # x, _ = gcn(x, A_dynamic * importance)
 
         # global pooling
         x = F.avg_pool2d(x, x.size()[2:])

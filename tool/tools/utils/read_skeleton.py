@@ -178,6 +178,7 @@ def read_skeleton(file):
                                     body_info['numJoint'] = len(body_info['jointInfo'])
                                     break
                             break
+
     return skeleton_sequence
 
 
@@ -240,9 +241,9 @@ def data_augmentation(skeleton_sequence):
 # 身体 ID 和关节坐标： 浮点数
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Data Converter.')
-    parser.add_argument('--data_path', default='../../../data/3')
+    parser.add_argument('--data_path', default='../../../data/test')
     parser.add_argument('--ignored_sample_path', default='none')
-    parser.add_argument('--out_folder', default='../../../data/data_test')
+    parser.add_argument('--out_folder', default='../../../data/data_all')
     arg = parser.parse_args()
     arg.ignored_sample_path = None
     gendata(arg.data_path, arg.out_folder, arg.ignored_sample_path)

@@ -19,7 +19,7 @@ model_input_frame: 128
 print_log: false
 save_log: true
 use_gpu: true
-weights: ./models/0226+all+noise.pt
-weights1: ./models/0225+352006.pt
+weights: ./models/0216(0145 0220 0306.pt
+weights1: ./models/0225+avg.pt
 weights2: ./models/0225+505015.pt
 work_dir: ./work_dir/tmp

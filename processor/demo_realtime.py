@@ -91,11 +91,10 @@ class DemoRealtime(IO):
             # '5':model5
         }
 
-
         #动态调整参数
         models=[model1,model2]
         feature_centers_path = [
-             "./data/1/0225+505015.npy", "./data/111/0225+352006.npy"   #特征中心
+             "./data/1/0225+505015.npy", "./data/111/0225+352006.npy"
             ]
         cov_path = "./data/global_cov.npy"    #协方差
         self.feature_centers = [np.load(path) for path in feature_centers_path]
@@ -229,11 +228,11 @@ class DemoRealtime(IO):
                 features.append(current_feature_change.squeeze(0))
                 # features.append(current_feature_change)
         # if len(features) > 0:
-            fused_features = torch.stack(features).mean(dim=0)  # 形状 [T, V, M]
+            fused_features = torch.stack(features).mean(dim=0)
             intensity = fused_features.cpu().numpy()
             # features = torch.stack(features)
-            # intensity = (features * features).sum(dim=0) ** 0.5  # 计算三维强度
-            # intensity = (features.unsqueeze(1) * features.unsqueeze(2)).sum(dim=0) ** 0.5  # 计算三维强度
+            # intensity = (features * features).sum(dim=0) ** 0.5
+            # intensity = (features.unsqueeze(1) * features.unsqueeze(2)).sum(dim=0) ** 0.5
         # else:
         #     intensity = np.array([])  # 如果没有特征
 
