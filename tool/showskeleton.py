@@ -264,6 +264,7 @@ def Print3D(num_frame, point, arms, rightHand, leftHand, legs, body, waist):
     m = num_frame   # 到第m帧结束，n<m<row
     plt.figure()
     plt.ion()
+    plt.axis('off')
     for i in range(n, m):
         plt.cla() # Clear axis, 即清除当前图形中的当前活动轴, 其他轴不受影响
 
@@ -308,12 +309,12 @@ def Print3D(num_frame, point, arms, rightHand, leftHand, legs, body, waist):
 
 ## main函数
 def main():
-    data_path = '../data/graph/4.skeleton'  # 新的.skeleton文件路径
-    point = read_xyz(data_path)   # 读取 x,y,z三个坐标
-    print('Read Data Done!')  # 数据读取完毕
+    data_path = './data/1/hand_dataA011.skeleton'
+    point = read_xyz(data_path)
+    print('Read Data Done!')
 
-    num_frame = point.shape[1]  # 帧数
-    print(point.shape)  # 坐标数(3) × 帧数 × 关节数(21) × max_body(2)
+    num_frame = point.shape[1]
+    print(point.shape)
 
     # 相邻关节标号
     arms = [0,1,2,3,4]
@@ -322,6 +323,7 @@ def main():
     legs = [0,13,14,15,16]
     body = [0,17,18,19,20]
     waist = [0,20]
+
     Print3D(num_frame, point, arms, rightHand, leftHand, legs, body, waist)
 
 main()

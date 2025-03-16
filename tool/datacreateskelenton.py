@@ -66,7 +66,7 @@ def main():
                 hand_data_list = []  
             elif key == ord('e'):  
                 recording = False
-                save_to_skeleton('../data/graph/4.skeleton', hand_data_list)
+                save_to_skeleton('../data/graph/1.skeleton', hand_data_list)
            
             elif key == ord('q'):  
                 break

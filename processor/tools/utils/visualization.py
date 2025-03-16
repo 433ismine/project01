@@ -28,9 +28,9 @@ def stgcn_visualize(pose,
         text = frame * 0
         for m in range(M):
 
-            score = pose[2, t, :, m].max()
-            if score < 0.3:
-                continue
+            # score = pose[2, t, :, m].max()
+            # if score < 0.3:
+            #     continue
 
             for i, j in edge:
                 xi = pose[0, t, i, m]
@@ -73,9 +73,9 @@ def stgcn_visualize(pose,
         feature = np.abs(feature)
         feature = feature / feature.mean()
         for m in range(M):
-            score = pose[2, t, :, m].max()
-            if score < 0.3:
-                continue
+            # score = pose[2, t, :, m].max()
+            # if score < 0.3:
+            #     continue
 
             f = feature[t // 4, :, m]**5
             if f.mean() != 0:
