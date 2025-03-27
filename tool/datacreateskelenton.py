@@ -24,7 +24,7 @@ def save_to_skeleton(file_name, hand_data_list):
     with open(file_name, 'w', newline='') as csvfile:
         fieldnames = ['frame', 'body', 'joint', 'x', 'y', 'z']
         writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
-        joint_idx=21
+        joint_idx = 21
         frame_num = 1
         for frame_data in hand_data_list:
             for joint_idx, joint_data in enumerate(frame_data):

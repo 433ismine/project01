@@ -188,6 +188,7 @@
 # -*- coding:utf-8 -*-
 import numpy as np
 import matplotlib.pyplot as plt
+from scipy.interpolate import UnivariateSpline
 from mpl_toolkits.mplot3d import Axes3D
 
 def read_skeleton(file):
@@ -216,7 +217,6 @@ def read_skeleton(file):
                         }]
                     })
                 else:
-                    # 找到正确的帧并添加关节数据
                     for frame_info in skeleton_sequence['frameInfo']:
                         if frame_info['frameNum'] == frame:
                             for body_info in frame_info['bodyInfo']:
@@ -307,14 +307,65 @@ def Print3D(num_frame, point, arms, rightHand, leftHand, legs, body, waist):
     plt.ioff()
     plt.show()
 
+
+def calculate_point(point,joint1,joint2):
+    newpoint=[]
+    px=(point[0,:,joint1,0]+point[0,:,joint2,0]/2)
+    py = (point[1, :, joint1, 0] + point[1, :, joint2,0] / 2)
+    pz = (point[2, :, joint1, 0] + point[2, :, joint2,0] / 2)
+    newpoint.append({'px':px, 'py':py,'pz': pz})
+    print(newpoint)
+    return (px, py, pz)
+def plot_3D_trajectory(px, py, pz):
+    fig = plt.figure()
+    ax = fig.add_subplot(111, projection='3d')
+    ax.plot(px.flatten(), py.flatten(), pz.flatten(), label='Trajectory', color='blue')
+    ax.set_xlabel('X')
+    ax.set_ylabel('Y')
+    ax.set_zlabel('Z')
+    ax.set_title('3D Trajectory of Midpoints')
+    plt.legend()
+    plt.show()
+
+
+def plot_fitted_trajectory(px, py, pz):
+    fitted_x, fitted_y, fitted_z = fit_3D_trajectory(px, py, pz)
+
+    fig = plt.figure()
+    ax = fig.add_subplot(111, projection='3d')
+    ax.plot(px, py, pz, label='Original Trajectory', color='blue', alpha=0.5)
+    ax.plot(fitted_x, fitted_y, fitted_z, label='Fitted Trajectory', color='red')
+    ax.set_xlabel('X')
+    ax.set_ylabel('Y')
+    ax.set_zlabel('Z')
+    ax.set_title('3D Trajectory Fitting')
+    plt.legend()
+    plt.show()
+def fit_3D_trajectory(px, py, pz):
+    # Create a parameter t based on the length of the trajectory
+    t = np.arange(len(px))
+
+    # Fit a spline for each dimension
+    spline_x = UnivariateSpline(t, px, k=3, s=0)  # Cubic spline for x
+    spline_y = UnivariateSpline(t, py, k=3, s=0)  # Cubic spline for y
+    spline_z = UnivariateSpline(t, pz, k=3, s=0)  # Cubic spline for z
+
+    # Create a finer parameter t for smoothness
+    t_fine = np.linspace(0, len(px) - 1, 500)  # 500 points for smooth curve
+    fitted_x = spline_x(t_fine)
+    fitted_y = spline_y(t_fine)
+    fitted_z = spline_z(t_fine)
+
+    return fitted_x, fitted_y, fitted_z
 ## main函数
 def main():
-    data_path = './data/1/hand_dataA011.skeleton'
+    data_path = './data/graph/2.skeleton'
     point = read_xyz(data_path)
     print('Read Data Done!')
 
     num_frame = point.shape[1]
     print(point.shape)
+
 
     # 相邻关节标号
     arms = [0,1,2,3,4]
@@ -324,6 +375,14 @@ def main():
     body = [0,17,18,19,20]
     waist = [0,20]
 
-    Print3D(num_frame, point, arms, rightHand, leftHand, legs, body, waist)
+    joint1 = 0  # e.g., joint ID 0
+    joint2 = 0  # e.g., joint ID 1
+
+    # Calculate midpoints
+    px, py, pz = calculate_point(point, joint1, joint2)
+    # plot_3D_trajectory(px, py, pz)
+    plot_fitted_trajectory(px, py, pz)
+
+    # Print3D(num_frame, point, arms, rightHand, leftHand, legs, body, waist)
 
 main()

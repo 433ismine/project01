@@ -17,7 +17,7 @@ model_args:
   dropout: 0.5
   edge_importance_weighting: True
   graph_args:
-    layout: 'ntu-rgb+d'
+    layout: 'hand_rgbd'
     strategy: 'spatial'
 
 #optim
